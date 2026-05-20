@@ -112,6 +112,7 @@ class InputHandler {
       if(map[e.key]){this._next=map[e.key];e.preventDefault();}
       if(e.key==='Enter'||e.key===' '){this._enter=true;e.preventDefault();}
     });
+    window.addEventListener('click', ()=>{ this._enter=true; });
   }
   getNextDirection(){return this._next;}
   consumeNextDirection(){this._next=null;}
@@ -300,7 +301,7 @@ class Renderer {
       for(const g of this._ghosts) this._drawGhost(g);
     }
     this._drawHUD();
-    if(state===GAME_STATE.TITLE)       this._overlay('PACMAN','Press ENTER or SPACE to Start','#FFD700');
+    if(state===GAME_STATE.TITLE)       this._overlay('PACMAN','Press ENTER / SPACE or Click to Start','#FFD700');
     if(state===GAME_STATE.GAME_OVER)   this._overlay('GAME OVER','Press ENTER to Restart','#FF0000');
     if(state===GAME_STATE.WIN)         this._overlay('YOU WIN!','Press ENTER to Play Again','#00FF00');
     if(state===GAME_STATE.LEVEL_CLEAR) this._overlay('LEVEL CLEAR!','','#FFD700');
@@ -426,7 +427,7 @@ class Game {
       case GAME_STATE.TITLE:
         if(this._input.isEnterPressed()){this._score.reset();this._startLevel();}
         break;
-      case GAME_STATE.PLAYING:
+      case GAME_STATE.PLAYING: {
         this._stepMode(dt);
         this._pacman.update(dt);
         const blinky=this._ghosts[0];
@@ -434,6 +435,7 @@ class Game {
         this._checkDots(); this._checkGhosts();
         if(this._maze.remainingDots()===0) this._set(GAME_STATE.LEVEL_CLEAR);
         break;
+      }
       case GAME_STATE.DYING:
         this._dyingTimer+=dt;
         if(this._dyingTimer>=DYING_DURATION){
