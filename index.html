@@ -108,8 +108,8 @@ class InputHandler {
   constructor() {
     this._next=null; this._enter=false;
     window.addEventListener('keydown', e=>{
-      const map={ArrowUp:'UP',ArrowDown:'DOWN',ArrowLeft:'LEFT',ArrowRight:'RIGHT',w:'UP',s:'DOWN',a:'LEFT',d:'RIGHT'};
-      if(map[e.key]){this._next=map[e.key];e.preventDefault();}
+      const map={ArrowUp:'UP',ArrowDown:'DOWN',ArrowLeft:'LEFT',ArrowRight:'RIGHT',w:'UP',W:'UP',s:'DOWN',S:'DOWN',a:'LEFT',A:'LEFT',d:'RIGHT',D:'RIGHT'};
+      if(map[e.key]){this._next=map[e.key];this._enter=true;e.preventDefault();}
       if(e.key==='Enter'||e.key===' '){this._enter=true;e.preventDefault();}
     });
     window.addEventListener('click', ()=>{ this._enter=true; });
@@ -125,7 +125,7 @@ class Pacman {
   constructor(maze,input) { this._maze=maze; this._input=input; this._mouthTimer=0; this.reset(); }
   reset() {
     const p=tileToPixel(PACMAN_START.col,PACMAN_START.row);
-    this._x=p.x; this._y=p.y; this._dir='LEFT'; this._nextDir=null; this._dead=false; this._deathTimer=0;
+    this._x=p.x; this._y=p.y; this._dir=null; this._nextDir=null; this._dead=false; this._deathTimer=0;
   }
   update(dt) {
     if(this._dead){this._deathTimer+=dt;return;}
@@ -135,18 +135,20 @@ class Pacman {
     const {col,row}=pixelToTile(this._x,this._y);
     const cx=col*TILE_SIZE+TILE_SIZE/2, cy=row*TILE_SIZE+TILE_SIZE/2;
     const dist=Math.abs(this._x-cx)+Math.abs(this._y-cy);
-    if(dist < speed*sec+1 && this._nextDir) {
+    if(dist < TILE_SIZE/2 && this._nextDir) {
       const nb=neighborTile(col,row,this._nextDir);
       if(this._maze.isWalkable(wrapCol(nb.col),nb.row)){
-        this._x=cx; this._y=cy; this._dir=this._nextDir; this._nextDir=null; this._input.consumeNextDirection();
+        this._x=cx; this._y=cy; this._dir=this._nextDir; this._nextDir=null;
       }
     }
-    const nb=neighborTile(col,row,this._dir);
-    if(this._maze.isWalkable(wrapCol(nb.col),nb.row)){
-      const [dx,dy]=DIR_VEC[this._dir];
-      this._x+=dx*speed*sec; this._y+=dy*speed*sec;
-      const w=COLS*TILE_SIZE;
-      if(this._x<0)this._x+=w; if(this._x>=w)this._x-=w;
+    if(this._dir) {
+      const nb=neighborTile(col,row,this._dir);
+      if(this._maze.isWalkable(wrapCol(nb.col),nb.row)){
+        const [dx,dy]=DIR_VEC[this._dir];
+        this._x+=dx*speed*sec; this._y+=dy*speed*sec;
+        const w=COLS*TILE_SIZE;
+        if(this._x<0)this._x+=w; if(this._x>=w)this._x-=w;
+      }
     }
     this._mouthTimer+=dt;
   }
@@ -324,7 +326,7 @@ class Renderer {
   }
   _drawPacman(){
     const ctx=this._ctx, p=this._pacman, r=TILE_SIZE/2-1, a=p.mouthAngle;
-    const rot={RIGHT:0,DOWN:Math.PI/2,LEFT:Math.PI,UP:-Math.PI/2}[p.direction]??0;
+    const rot={RIGHT:0,DOWN:Math.PI/2,LEFT:Math.PI,UP:-Math.PI/2}[p.direction||'RIGHT']??0;
     ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(rot);
     ctx.fillStyle='#FFD700'; ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0,r,a,Math.PI*2-a); ctx.closePath(); ctx.fill();
     ctx.restore();
